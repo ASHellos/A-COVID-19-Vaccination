@@ -119,10 +119,8 @@ int main(int argc, char *argv[])
 Login::Login(QWidget *parent): QMainWindow(parent), ui(new Ui::Login){  
     ui->setupUi(this);
     TestDB();
-    on_groupBox_toggled(0);
-    ui->pushButton_userRegister->setVisible(0);
-
-
+    on_groupBox_toggled(0); //for set the login page invisible
+    ui->pushButton_userRegister->setVisible(0); //for set the register button invisible for the normal users
 }
 
 Login::~Login(){
@@ -132,21 +130,23 @@ Login::~Login(){
 // for action admin register....(admin_name,admin_pass,admin_id)
 void Login::on_pushButton_adminRegister_clicked(){   
     Login conn;
-    QString adminUsername, adminPassword, adminCode;
-
-    adminUsername = ui->lineEdit_adminUsername->text();
+    QString adminUsername, adminPassword, adminCode; //variable for stocke the inforation
+//actions for get the information from the widgets
+    adminUsername = ui->lineEdit_adminUsername->text(); 
     adminPassword = ui->lineEdit_adminPW->text();
     adminCode = ui->lineEdit_adminCode->text();
-
+//test the db is open or no
     if(!connOpen()){
         qDebug() <<"Failed to open the database";
         return;
     }
     connOpen();   // open the database function
     QSqlQuery qry;
+  //for add new admin account to db
     qry.prepare("insert into admins (admin_name,admin_pass,admin_id) values ('"+adminUsername+"','"+adminPassword+"','"+adminCode+"')" );
-
+//show in qt command the information sent to db
     qDebug()<<qry.executedQuery();
+  //message of the fonction
     if(qry.exec()) {
         QMessageBox::information(this,tr("Save"),tr("Admin Data Saved!"));
         conn.connClose();
@@ -158,12 +158,16 @@ void Login::on_pushButton_adminRegister_clicked(){
 // for action admin login select 3 columns from database
 void Login::on_pushButton_adminLogin_clicked(){  
     int count = 0;
+  
+  //the same just for login admin
     try {
+  //for get the information from th widgets we need name password and work code=id
         QString adminUsername = ui ->lineEdit_adminUsername->text();   // login and get the text of username and password form user inputs.
         QString adminPassword = ui->lineEdit_adminPW->text();
         QString adminCode = ui->lineEdit_adminCode->text();
         connOpen();
         QSqlQuery qry;
+  //search if in db account with the same information of authentification
         qry.prepare("select* from admins where admin_name='"+adminUsername + "'and admin_pass = '"+adminPassword+"'and admin_id = '"+adminCode+"'");
 
         if(qry.exec()) {
@@ -182,6 +186,8 @@ void Login::on_pushButton_adminLogin_clicked(){
             }
         }
     }
+  
+  //give the status of the inforamation entred its wrong or not 
     catch (...) {
         ui->Status ->setText("Username or password or work code is NOT correct.");
         qDebug() << "Catch Error： Username or password or work code is NOT correct. ";
@@ -192,7 +198,8 @@ void Login::on_pushButton_adminLogin_clicked(){
 // for action  user login select 2 columns
 void Login::on_pushButton_userLogin_clicked(){  
     int count = 0;
-    try {
+  //the same just for login admin but this for users normal
+  try {
         QString userUsername = ui ->lineEdit_userUsername->text();     // login and get the text of username and password form user inputs.
         QString userPassword = ui->lineEdit_userPW->text();
         connOpen();                                                    // open the database function, there are debug in the functions.
@@ -228,6 +235,7 @@ void Login::on_pushButton_userLogin_clicked(){
 void Login::on_pushButton_userRegister_clicked(){
     Login conn;
     User curUser;
+  //the same with admin registration but for normal users
     curUser.username = ui->lineEdit_userUsername->text();
     curUser.password = ui->lineEdit_userPW->text();
 
@@ -246,13 +254,14 @@ void Login::on_pushButton_userRegister_clicked(){
     }
 }
 
-
+//event of close
 void Login::on_pushButton_loginQuit_clicked(){
     QMessageBox::StandardButton reply = QMessageBox::question(this,"Exit","Are you sure to quit the login page? ", QMessageBox::Yes| QMessageBox::No);
     if(reply == QMessageBox::Yes){
         QApplication::quit();
     }
 }
+  //test the db is connected or not and give u the status the test from the destination give in login.h
 void Login::TestDB(){
     if(!connOpen()){
         ui->Status->setText("Failed to open the database!");
@@ -263,16 +272,19 @@ void Login::TestDB(){
 
 void Login::on_groupBox_toggled(bool arg1)
 {
+  //admin page visible
     ui->groupBox->setVisible(arg1);
 }
 
-
+//action for set the page of admin and register button visible 
 void Login::on_Adminbutton_clicked()
 {
+  //z is count if u give the code wrong 3 time u will be cannot log as admin
     z++;
     checkk D;
     auto repl = D.exec();
     auto e=D.Password();
+  //if the password enter is correct 2001 u will be see the admin page and register button
     if(e==2001){
         ui->groupBox->setVisible(1);
         ui->pushButton_userRegister->setEnabled(1);
@@ -322,7 +334,7 @@ public:
         mydb.close();
         mydb.removeDatabase(QSqlDatabase::defaultConnection);
     }
-
+//for test is db connectsor no
     bool connOpen(){
         mydb = QSqlDatabase::addDatabase("QSQLITE");
         mydb.setDatabaseName("C:/Users/Vaccine.db");
@@ -379,6 +391,7 @@ using namespace std;
 
 // Default constructor
 User::User() {
+  //and give the null if the place vide
     QString username = NULL,
             password = NULL,
             insurance = NULL,
@@ -393,6 +406,7 @@ User::User() {
 
 // constructor for first login page, two variables
 User::User(QString un, QString pw){
+  /for the type and inhe
     this->username = un;
     this->password = pw;
     this->insurance = "0";
@@ -525,6 +539,7 @@ UserDialog1::~UserDialog1(){
 void UserDialog1::on_pushButton_userNextPage_clicked(){
     Login conn;
     User user;
+  //for give the information 
     user.username = user_name;
     user.password = pw;
     user.insurance = ui->lineEdit_insurNum->text();
@@ -560,30 +575,9 @@ void UserDialog1::on_pushButton_userNextPage_clicked(){
     qDebug()<< user.username + " , " + user.password + " , " + user.insurance + " , " + user.firstname + " , " + user.lastname +
                " , " + user.age + " , " + user.vaccine + " , " + user.shot + " , " + user.date + " , " + user.time;
 
-    //............................Writing / Creating into a new file in Qt.................................//
-
-    QString filename="usersmation.txt";
-    QFile file( filename );
-    if ( file.open(QIODevice::ReadWrite) )
-    {
-        QTextStream stream( &file );
-
-        stream<<"Hi, I am writting the user's vaccine infomation form My Qt to this file : " << Qt::endl ;
-
-        stream<<"Username: " +user.username <<Qt::endl;
-        stream <<"password: " + user.password <<Qt::endl;
-        stream <<"insurance: " + user.insurance <<Qt::endl;
-        stream <<"First Name: " + user.firstname <<Qt::endl;
-        stream <<"Last Name: " + user.lastname <<Qt::endl;
-        stream <<"Age: " + user.age <<Qt::endl;
-        stream <<"Vaccine: " + user.vaccine <<Qt::endl;
-        stream <<"Shot: " + user.shot <<Qt::endl;
-        stream <<"Date: " + user.date <<Qt::endl;
-        stream <<"Time: " + user.time <<Qt::endl;
-    }
 }
 
-
+//for the type of the vaccine for specific cas
 void UserDialog1::on_radioButton_Jonson_clicked(){
     vaccine = "Jonson & Johnson’s Janssen ";
     ui->radioButton_under18->setCheckable(1);

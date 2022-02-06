@@ -359,6 +359,10 @@ private:
 
 ```
   </h4></p>
+  
+  ![2022-02-06 04_12_11-VaccineSchedule - Qt Creator](https://user-images.githubusercontent.com/93819249/152666371-c69fe399-27c2-4db6-ad0a-699833e9ef7e.png)
+
+  
 <p align=left>  <h1 align="left">C. User.cpp:</12></p>
   
   <p align=left>  <h4 align="left">
@@ -470,6 +474,9 @@ public:
  ```
   </h4></p>
   
+  
+  ![2022-02-06 04_14_42-ASHellos_A-COVID-19-Vaccination](https://user-images.githubusercontent.com/93819249/152666408-37eb51d8-edd3-4c16-9024-ed2d453f0b1c.png)
+
 <p align=left>  <h1 align="left">D. UserDialog1.cpp:</12></p>
  
  <p align=left>  <h4 align="left">
@@ -695,6 +702,9 @@ private:
   ```
   
   </h4></p>
+  
+  ![2022-02-06 04_15_17-VaccineSchedule - Qt Creator](https://user-images.githubusercontent.com/93819249/152666410-69355d26-7c08-4a6f-9a64-b7b8de98fcee.png)
+  
   
  <p align=left>  <h1 align="left"> E. AdminDialog1.cpp:</12></p>
   

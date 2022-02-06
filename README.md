@@ -59,8 +59,9 @@ Stockez toutes les données dont nous avons besoin pour ce programme, il est inc
  </p>
 
 
+![2022-02-06 03_15_11-Login](https://user-images.githubusercontent.com/93819249/152665431-bf6fe4ba-3422-4e1a-9667-4992f8e28985.png)
 
-![interface_zas](https://user-images.githubusercontent.com/93833171/151639759-19b499ad-69ca-4966-95c6-39d8bef5b9bb.jpg)
+
 
 * * *
 <p>
@@ -83,15 +84,9 @@ Stockez toutes les données dont nous avons besoin pour ce programme, il est inc
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    //set the app style sheet
-    QFile styleSheetFile(":/qss/Irrorater.qss");
-    styleSheetFile.open(QFile::ReadOnly);
-    QString styleSheet = QLatin1String(styleSheetFile.readAll());
-    a.setStyleSheet(styleSheet);
-
     Login w;
-    w.show();   // window is fefault when it built. So need be show by reset "show";
-    return a.exec();  // make the program keep running, wait the event happen
+    w.show();
+    return a.exec();
 }
 
   ```
@@ -104,6 +99,8 @@ int main(int argc, char *argv[])
   ```cpp
 #include "Login.h"
 #include "ui_Login.h"
+#include "checkk.h"
+#include "ui_checkk.h"
 #include "UserDialog1.h"
 #include <QMessageBox>
 #include "userMain.h"
@@ -114,24 +111,24 @@ int main(int argc, char *argv[])
 #include <QDebug>
 #include <QString>
 #include <QException>
+#include<QDebug>
 
-Login::Login(QWidget *parent): QMainWindow(parent), ui(new Ui::Login){
+
+Login::Login(QWidget *parent): QMainWindow(parent), ui(new Ui::Login){  
     ui->setupUi(this);
-    if(!connOpen()){
-        ui->label->setText("Failed to open the database!");
-        qDebug()<<"The database Not connected ";
-    }else{
-        ui->label->setText("Connected database........");
-        qDebug()<<"The database connected ";
-    }
+    TestDB();
+    on_groupBox_toggled(0);
+    ui->pushButton_userRegister->setVisible(0);
+
+
 }
 
 Login::~Login(){
     delete ui;
 }
 
-// for action admin register....(admin_username,admin_password,admin_code)
-void Login::on_pushButton_adminRegister_clicked(){
+// for action admin register....(admin_name,admin_pass,admin_id)
+void Login::on_pushButton_adminRegister_clicked(){   
     Login conn;
     QString adminUsername, adminPassword, adminCode;
 
@@ -145,7 +142,7 @@ void Login::on_pushButton_adminRegister_clicked(){
     }
     connOpen();   // open the database function
     QSqlQuery qry;
-    qry.prepare("insert into admin (admin_username,admin_password,admin_code) values ('"+adminUsername+"','"+adminPassword+"','"+adminCode+"')" );
+    qry.prepare("insert into admins (admin_name,admin_pass,admin_id) values ('"+adminUsername+"','"+adminPassword+"','"+adminCode+"')" );
 
     qDebug()<<qry.executedQuery();
     if(qry.exec()) {
@@ -157,16 +154,15 @@ void Login::on_pushButton_adminRegister_clicked(){
 }
 
 // for action admin login select 3 columns from database
-void Login::on_pushButton_adminLogin_clicked(){
+void Login::on_pushButton_adminLogin_clicked(){  
     int count = 0;
-    //.........................................................Exception.....................................//
     try {
-        QString adminUsername = ui ->lineEdit_adminUsername->text();   // login and get the text of username and password form user input.
+        QString adminUsername = ui ->lineEdit_adminUsername->text();   // login and get the text of username and password form user inputs.
         QString adminPassword = ui->lineEdit_adminPW->text();
         QString adminCode = ui->lineEdit_adminCode->text();
         connOpen();
         QSqlQuery qry;
-        qry.prepare("select* from admin where admin_username='"+adminUsername + "'and admin_password = '"+adminPassword+"'and admin_code = '"+adminCode+"'");
+        qry.prepare("select* from admins where admin_name='"+adminUsername + "'and admin_pass = '"+adminPassword+"'and admin_id = '"+adminCode+"'");
 
         if(qry.exec()) {
             while(qry.next()){
@@ -185,22 +181,21 @@ void Login::on_pushButton_adminLogin_clicked(){
         }
     }
     catch (...) {
-        ui->label ->setText("Username or password or work code is NOT correct.");
+        ui->Status ->setText("Username or password or work code is NOT correct.");
         qDebug() << "Catch Error： Username or password or work code is NOT correct. ";
     }
 
 }
 
 // for action  user login select 2 columns
-void Login::on_pushButton_userLogin_clicked(){
+void Login::on_pushButton_userLogin_clicked(){  
     int count = 0;
-    //.........................................................Exception.....................................//
     try {
-        QString userUsername = ui ->lineEdit_userUsername->text();     // login and get the text of username and password form user input.
+        QString userUsername = ui ->lineEdit_userUsername->text();     // login and get the text of username and password form user inputs.
         QString userPassword = ui->lineEdit_userPW->text();
-        connOpen();                                                    // open the database function, there are debug in the function.
+        connOpen();                                                    // open the database function, there are debug in the functions.
         QSqlQuery qry;
-        qry.prepare("select* from userInfo where username='"+userUsername+ "' and password = '"+userPassword+"'" );
+        qry.prepare("select* from users where name='"+userUsername+ "' and pass = '"+userPassword+"'" );
 
         if(qry.exec()) {
             while(qry.next()){
@@ -208,7 +203,7 @@ void Login::on_pushButton_userLogin_clicked(){
             }
             qDebug() << count;
             if(count==1){
-                ui->label ->setText("Username and password is correct.");
+                ui->Status ->setText("Username and password is correct.");
                 connClose();
                 this->hide();
                 userP1 = new UserDialog1(this);
@@ -224,9 +219,7 @@ void Login::on_pushButton_userLogin_clicked(){
         }
     }
     catch (...) {
-        ui->label ->setText("Username or password is NOT correct.");
-        qDebug() << "Catch Error： Username or password is NOT correct. ";
-    }
+        ui->Status ->setText("Username or password is NOT correct.");    }
 }
 
 
@@ -242,9 +235,7 @@ void Login::on_pushButton_userRegister_clicked(){
     }
     connOpen();
     QSqlQuery qry;
-    qry.prepare("insert into userInfo (username,password) values ('"+curUser.username+"','"+curUser.password+"')" );
-    qDebug()<<qry.executedQuery();
-
+    qry.prepare("insert into users (name,pass) values ('"+curUser.username+"','"+curUser.password+"')" );
     if(qry.exec()) {
         QMessageBox::information(this,tr("Save"),tr("User Data Saved!"));
         conn.connClose();
@@ -255,13 +246,45 @@ void Login::on_pushButton_userRegister_clicked(){
 
 
 void Login::on_pushButton_loginQuit_clicked(){
-    QMessageBox::StandardButton reply = QMessageBox::question(this,"My Title","Are you sure to quit the login page? ", QMessageBox::Yes| QMessageBox::No);
+    QMessageBox::StandardButton reply = QMessageBox::question(this,"Exit","Are you sure to quit the login page? ", QMessageBox::Yes| QMessageBox::No);
     if(reply == QMessageBox::Yes){
         QApplication::quit();
-    }else{
-        qDebug() << "Answer 'NO' Button is clicked";
     }
 }
+void Login::TestDB(){
+    if(!connOpen()){
+        ui->Status->setText("Failed to open the database!");
+    }else{
+        ui->Status->setText("Connected database........");
+    }
+}
+
+void Login::on_groupBox_toggled(bool arg1)
+{
+    ui->groupBox->setVisible(arg1);
+}
+
+
+void Login::on_Adminbutton_clicked()
+{
+    z++;
+    checkk D;
+    auto repl = D.exec();
+    auto e=D.Password();
+    if(e==2001){
+        ui->groupBox->setVisible(1);
+        ui->pushButton_userRegister->setEnabled(1);
+        ui->pushButton_userRegister->setVisible(1);
+    }
+    if(z==3){
+        ui->Status->setText("You are not An Admin");
+        ui->Adminbutton->setEnabled(0);
+        ui->Status->setText("Connected database........");
+        ui->Adminbutton->setVisible(0);
+    }
+}
+
+
 
    ```
   </h4></p>
@@ -300,7 +323,7 @@ public:
 
     bool connOpen(){
         mydb = QSqlDatabase::addDatabase("QSQLITE");
-        mydb.setDatabaseName("C:/Users/azert/Downloads/Covid-19-Vaccine-Application-master (1)/Covid-19-Vaccine-Application-master/VaccineSchedule/mydb.db");
+        mydb.setDatabaseName("C:/Users/Vaccine.db");
         if(!mydb.open()){
             qDebug()<<("Failed to open the database!");
             return false;
@@ -313,6 +336,9 @@ public:
 public:
     Login(QWidget *parent = nullptr);
     ~Login();
+    void TestDB();
+    int z=0;
+
 
 private slots:
     void on_pushButton_userLogin_clicked();
@@ -320,6 +346,8 @@ private slots:
     void on_pushButton_userRegister_clicked();
     void on_pushButton_adminRegister_clicked();
     void on_pushButton_loginQuit_clicked();
+    void on_groupBox_toggled(bool arg1);
+    void on_Adminbutton_clicked();
 
 private:
     Ui::Login *ui;
@@ -327,6 +355,7 @@ private:
     AdminDialog1 *adminP1;
 };
 #endif // LOGIN_H
+
 
 ```
   </h4></p>
@@ -347,8 +376,8 @@ User::User() {
     QString username = NULL,
             password = NULL,
             insurance = NULL,
-            firstName = NULL,
-            lastName = NULL,
+            firstname = NULL,
+            lastname = NULL,
             age = NULL,
             vaccine = NULL,
             shot = NULL,
@@ -361,8 +390,8 @@ User::User(QString un, QString pw){
     this->username = un;
     this->password = pw;
     this->insurance = "0";
-    this->firstName = "NULL",
-            this->lastName = "NULL",
+    this->firstname = "NULL",
+            this->lastname = "NULL",
             this->age = "0",
             this->vaccine = "NULL",
             this->shot = "0",
@@ -374,8 +403,8 @@ User::User(QString un, QString pw, QString insur, QString fn, QString ln, QStrin
     this->username = un;
     this->password = pw;
     this->insurance = insur;
-    this->firstName = fn;
-    this->lastName = ln;
+    this->firstname = fn;
+    this->lastname = ln;
     this->age = age;
     this->vaccine = vacc;
     this->shot = shot;
@@ -404,7 +433,7 @@ class User{
 private:
 
 public:
-    QString username,password,insurance,firstName,lastName,age,vaccine,shot,date,time; //private will be better
+    QString username,password,insurance,firstname,lastname,age,vaccine,shot,date,time; //for the stock info
 
     // constructors
     User();
@@ -412,24 +441,24 @@ public:
     User(QString un, QString pw, QString insur, QString fn, QString ln, QString age, QString vacc, QString shot, QString date, QString time);
 
 
-    // ******* Mutators
+    // sets information
     void setUsername(QString un);
     void setPassword(QString pw);
     void setInsurance(QString insur);
-    void setFirstName(QString fn);
-    void setLastName(QString ln);
+    void setfirstname(QString fn);
+    void setlastname(QString ln);
     void setAge(QString age);
     void setVaccine(QString vacc);
     void setShot(QString shot);
     void setDate(QString date);
     void setTime(QString time);
 
-    // ********* Accessors
+    // gets information
     QString getUsername();
     QString getPassword();
     QString getInsurance();
-    QString getFirstName();
-    QString getLastName();
+    QString getfirstname();
+    QString getlastname();
     QString getAge();
     QString getVaccine();
     QString getShot();
@@ -437,8 +466,6 @@ public:
     QString getTime();
 
 };
-
-#endif // USER_H
  
  ```
   </h4></p>
@@ -451,7 +478,6 @@ public:
 #include <QDialog>
 #include "ui_UserDialog1.h"
 #include "UserDialog1.h"
-#include "UserDL2.h"
 #include <QPixmap>
 #include <QMessageBox>
 #include <QDebug>
@@ -473,6 +499,7 @@ UserDialog1::UserDialog1(QWidget *parent) : QDialog(parent),ui(new Ui::UserDialo
         ui->label_userP1->setText("Connected database........");
         qDebug()<<"The database connected with UsserDialog1 page.";
     }
+
 }
 // google variables for save the data from different actions.
 QString age;
@@ -492,8 +519,8 @@ void UserDialog1::on_pushButton_userNextPage_clicked(){
     user.username = user_name;
     user.password = pw;
     user.insurance = ui->lineEdit_insurNum->text();
-    user.firstName = ui->lineEdit_fName->text();
-    user.lastName = ui->lineEdit_lName->text();
+    user.firstname = ui->lineEdit_fName->text();
+    user.lastname = ui->lineEdit_lName->text();
     user.age = age;
     user.vaccine = vaccine;
     user.shot = shot;
@@ -507,8 +534,8 @@ void UserDialog1::on_pushButton_userNextPage_clicked(){
     conn.connOpen();
     QSqlQuery qry;
 
-    qry.prepare("update userInfo set username='"+user.username+"',password='"+user.password+"',insurance='"+user.insurance+"',firstName='"+user.firstName+"',lastName='"+user.lastName+"'"
-             ",age='"+user.age+"',vaccine='"+user.vaccine+"',shot='"+user.shot+"',date='"+user.date+"',time='"+user.time+"' where username='"+user.username+"'");
+    qry.prepare("update users set name='"+user.username+"',pass='"+user.password+"',asurance='"+user.insurance+"',firstname='"+user.firstname+"',lastname='"+user.lastname+"'"
+             ",age='"+user.age+"',vaccin='"+user.vaccine+"',shote='"+user.shot+"',date='"+user.date+"',time='"+user.time+"' where name='"+user.username+"'");
 
     qDebug()<<qry.executedQuery();
     if(qry.exec()) {
@@ -521,12 +548,12 @@ void UserDialog1::on_pushButton_userNextPage_clicked(){
     window()->hide();
 
     qDebug()<< user.username + " saved infomation: ";
-    qDebug()<< user.username + " , " + user.password + " , " + user.insurance + " , " + user.firstName + " , " + user.lastName +
+    qDebug()<< user.username + " , " + user.password + " , " + user.insurance + " , " + user.firstname + " , " + user.lastname +
                " , " + user.age + " , " + user.vaccine + " , " + user.shot + " , " + user.date + " , " + user.time;
 
     //............................Writing / Creating into a new file in Qt.................................//
 
-    QString filename="UserInfomation.txt";
+    QString filename="usersmation.txt";
     QFile file( filename );
     if ( file.open(QIODevice::ReadWrite) )
     {
@@ -537,48 +564,36 @@ void UserDialog1::on_pushButton_userNextPage_clicked(){
         stream<<"Username: " +user.username <<Qt::endl;
         stream <<"password: " + user.password <<Qt::endl;
         stream <<"insurance: " + user.insurance <<Qt::endl;
-        stream <<"First Name: " + user.firstName <<Qt::endl;
-        stream <<"Last Name: " + user.lastName <<Qt::endl;
+        stream <<"First Name: " + user.firstname <<Qt::endl;
+        stream <<"Last Name: " + user.lastname <<Qt::endl;
         stream <<"Age: " + user.age <<Qt::endl;
         stream <<"Vaccine: " + user.vaccine <<Qt::endl;
         stream <<"Shot: " + user.shot <<Qt::endl;
         stream <<"Date: " + user.date <<Qt::endl;
         stream <<"Time: " + user.time <<Qt::endl;
     }
-
-    //................................Writing / Creating into a new file in Qt..............................//
-
-    // qry.prepare("insert into userInfo (username,password,insurance,firstName,lastName,age,vaccine,shot,date,time) "
-    //  "values ('"+user.username+"','"+user.password+"','"+user.insurance+"','"+user.firstName+"','"+user.lastName+"','"+user.age+"','"+user.vaccine+"','"+user.shot+"','"+user.date+"','"+user.time+"' )" );
-
-    /* qry.prepare("INSERT INTO userInfo(username,password,insurance,firstName,lastName,age,vaccine,shot(1st, 2nd),date,time) "
-               "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    qry.addBindValue(user.username);
-    qry.addBindValue(user.password);
-    qry.addBindValue(user.insurance);
-    qry.addBindValue(user.firstName);
-    qry.addBindValue(user.lastName);
-    qry.addBindValue(user.age);
-    qry.addBindValue(user.vaccine);
-    qry.addBindValue(user.shot);
-    qry.addBindValue(user.date);
-    qry.addBindValue(user.time);
-    qry.exec();
-  */
 }
 
 
-// for Radio Buttom, choose vaccine, user can only choose one kind of vaccine
 void UserDialog1::on_radioButton_Jonson_clicked(){
-    vaccine = "Jonson & Jonson";
+    vaccine = "Jonson & Johnson’s Janssen ";
+    ui->radioButton_under18->setCheckable(1);
+    ui->radioButton_under18->setVisible(1);
+    ui->radioButton_secondShot->setVisible(0);
 }
 
 void UserDialog1::on_radioButton_moderna_clicked(){
     vaccine = "Moderna";
+    ui->radioButton_under18->setCheckable(1);
+    ui->radioButton_under18->setVisible(1);
+    ui->radioButton_secondShot->setVisible(1);
 }
 
 void UserDialog1::on_radioButton_pfizer_clicked(){
     vaccine = "Pfizer-BioNTech";
+    ui->radioButton_under18->setCheckable(0);
+    ui->radioButton_under18->setVisible(0);
+    ui->radioButton_secondShot->setVisible(1);
 }
 
 
@@ -613,6 +628,7 @@ void UserDialog1::on_comboBox_hours_activated(const QString &arg1){
     tim = arg1;
 }
 
+
 ```
 </h4></p>
   
@@ -621,11 +637,10 @@ void UserDialog1::on_comboBox_hours_activated(const QString &arg1){
 <p align=left>  <h4 align="left">  
   
   ```cpp
-  #ifndef USERDIALOG1_H
+ #ifndef USERDIALOG1_H
 #define USERDIALOG1_H
 
 #include <QDialog>
-#include "UserDL2.h"
 
 namespace Ui {
 class UserDialog1;
@@ -640,7 +655,7 @@ public:
     explicit UserDialog1(QWidget *parent = nullptr);
     ~UserDialog1();
 
-    QString user_name;    // make suer the longin user and edit their own information. Make is same person.
+    QString user_name;
     QString pw;
 
 private slots:
@@ -672,7 +687,6 @@ private slots:
 
 private:
     Ui::UserDialog1 *ui;
-    UserDL2 *userP2;
 
 };
 
@@ -714,9 +728,10 @@ void AdminDialog1::on_pushButton_loadInfo_clicked(){
     Login conn;
     QSqlQueryModel * modal = new QSqlQueryModel();  // create model
     conn.connOpen();
+    //test db
     QSqlQuery* qry = new QSqlQuery(conn.mydb);
 
-    qry->prepare("select username,password,insurance,firstName,lastName,age,vaccine,shot,date,time from userInfo");
+    qry->prepare("select name,pass,asurance,firstname,lastname,age,vaccin,shote,date,time from users");
     qry->exec();
     modal->setQuery(*qry);
 
@@ -730,7 +745,7 @@ void AdminDialog1::on_pushButton_loadInfo_clicked(){
 
 }
 
-void AdminDialog1::on_comboBox_currentIndexChanged(const QString &arg1){
+void AdminDialog1::on_comboBox_currentIndexChanged(const QString &arg1){   
     QString username = ui->comboBox->currentText();
     Login conn;
     if(!conn.connOpen()){
@@ -740,7 +755,7 @@ void AdminDialog1::on_comboBox_currentIndexChanged(const QString &arg1){
     conn.connOpen();
     QSqlQuery qry;
 
-    qry.prepare("select * from userInfo where username='"+username+"'");
+    qry.prepare("select * from users where name='"+username+"'");
     qDebug()<<qry.executedQuery();
 
     if(qry.exec()) {
@@ -773,10 +788,9 @@ void AdminDialog1::on_tableView_activated(const QModelIndex &index){
     }
     conn.connOpen();
     QSqlQuery qry;
-    qry.prepare("select * from userInfo where username='"+val+"' or password='"+val+"' or insurance='"+val+"' or firstName='"+val+"' or lastName='"+val+"'"
-             " or age='"+val+"' or vaccine='"+val+"' or shot='"+val+"' or date='"+val+"' or time='"+val+"' ");
+    qry.prepare("select * from users where name='"+val+"' or pass='"+val+"' or asurance='"+val+"' or firstname='"+val+"' or lastname='"+val+"'"
+             " or age='"+val+"' or vaccin='"+val+"' or shote='"+val+"' or date='"+val+"' or time='"+val+"' ");
 
-    qDebug()<<qry.executedQuery();
     if(qry.exec()) {
 
         while(qry.next()){
@@ -810,7 +824,7 @@ void AdminDialog1::on_listView_activated(const QModelIndex &index){
     conn.connOpen();
     QSqlQuery qry;
 
-    qry.prepare("select * from userInfo where username='"+val+"' ");
+    qry.prepare("select * from users where name='"+val+"' ");
 
     qDebug()<<qry.executedQuery();
     if(qry.exec()) {
@@ -838,8 +852,8 @@ void AdminDialog1::on_pushButton_save_clicked(){  // insert
     user.username = ui->lineEdit_username->text();
     user.password = ui->lineEdit_pw->text();
     user.insurance = ui->lineEdit_insur->text();
-    user.firstName = ui->lineEdit_fName->text();
-    user.lastName = ui->lineEdit_lName->text();
+    user.firstname = ui->lineEdit_fName->text();
+    user.lastname = ui->lineEdit_lName->text();
     user.age = ui->lineEdit_age->text();
     user.vaccine = ui->lineEdit_vaccine->text();
     user.shot = ui->lineEdit_shot->text();
@@ -851,10 +865,9 @@ void AdminDialog1::on_pushButton_save_clicked(){  // insert
     }
     conn.connOpen();
     QSqlQuery qry;
-    qry.prepare("insert into userInfo (username,password,insurance,firstName,lastName,age,vaccine,shot,date,time) "
-     "values ('"+user.username+"','"+user.password+"','"+user.insurance+"','"+user.firstName+"','"+user.lastName+"','"+user.age+"','"+user.vaccine+"','"+user.shot+"','"+user.date+"','"+user.time+"' )" );
+    qry.prepare("insert into users (name,pass,asurance,firstname,lastname,age,vaccin,shote,date,time) "
+     "values ('"+user.username+"','"+user.password+"','"+user.insurance+"','"+user.firstname+"','"+user.lastname+"','"+user.age+"','"+user.vaccine+"','"+user.shot+"','"+user.date+"','"+user.time+"' )" );
 
-    qDebug()<<qry.executedQuery();
 
     if(qry.exec()) {
         QMessageBox::information(this,tr("Save"),tr("Data Saved!"));
@@ -862,9 +875,7 @@ void AdminDialog1::on_pushButton_save_clicked(){  // insert
     }else{
         QMessageBox::critical(this,tr("Error"),qry.lastError().text());
     }
-    qDebug()<< user.username + " saved her (his) infomation: ";
-    qDebug()<< user.username + " , " + user.password + " , " + user.insurance + " , " + user.firstName + " , " + user.lastName +
-               " , " + user.age + " , " + user.vaccine + " , " + user.shot + " , " + user.date + " , " + user.time;
+
 }
 
 
@@ -874,8 +885,8 @@ void AdminDialog1::on_pushButton_update_clicked(){  // update
     user.username = ui->lineEdit_username->text();
     user.password = ui->lineEdit_pw->text();
     user.insurance = ui->lineEdit_insur->text();
-    user.firstName = ui->lineEdit_fName->text();
-    user.lastName = ui->lineEdit_lName->text();
+    user.firstname = ui->lineEdit_fName->text();
+    user.lastname = ui->lineEdit_lName->text();
     user.age = ui->lineEdit_age->text();
     user.vaccine = ui->lineEdit_vaccine->text();
     user.shot = ui->lineEdit_shot->text();
@@ -889,10 +900,9 @@ void AdminDialog1::on_pushButton_update_clicked(){  // update
     conn.connOpen();
     QSqlQuery qry;
 
-    qry.prepare("update userInfo set username='"+user.username+"',password='"+user.password+"',insurance='"+user.insurance+"',firstName='"+user.firstName+"',lastName='"+user.lastName+"'"
-             ",age='"+user.age+"',vaccine='"+user.vaccine+"',shot='"+user.shot+"',date='"+user.date+"',time='"+user.time+"' where username='"+user.username+"'" );
+    qry.prepare("update users set name='"+user.username+"',pass='"+user.password+"',asurance='"+user.insurance+"',firstname='"+user.firstname+"',lastname='"+user.lastname+"'"
+             ",age='"+user.age+"',vaccin='"+user.vaccine+"',shote='"+user.shot+"',date='"+user.date+"',time='"+user.time+"' where name='"+user.username+"'" );
 
-    qDebug()<<qry.executedQuery();
 
     if(qry.exec()) {
         QMessageBox::information(this,tr("Edit"),tr("Data Updated!"));
@@ -901,9 +911,7 @@ void AdminDialog1::on_pushButton_update_clicked(){  // update
         QMessageBox::critical(this,tr("Error"),qry.lastError().text());
     }
 
-    qDebug()<< user.username + " Updated infomation: ";
-    qDebug()<< user.username + " , " + user.password + " , " + user.insurance + " , " + user.firstName + " , " + user.lastName +
-               " , " + user.age + " , " + user.vaccine + " , " + user.shot + " , " + user.date + " , " + user.time;
+
 
 }
 
@@ -911,7 +919,7 @@ void AdminDialog1::on_pushButton_update_clicked(){  // update
 void AdminDialog1::on_pushButton_delete_clicked(){ // delete
     Login conn;
     User user;
-    user.username = ui->lineEdit_username->text();   //only need a unique variable, find whole row and delete
+    user.username = ui->lineEdit_username->text();   //only need a unique variable
 
     if(!conn.connOpen()){
         qDebug() <<"Failed to open the database";
@@ -920,8 +928,7 @@ void AdminDialog1::on_pushButton_delete_clicked(){ // delete
     conn.connOpen();
     QSqlQuery qry;
 
-    qry.prepare("Delete from userInfo where username='"+user.username+"'");
-    qDebug()<<qry.executedQuery();
+    qry.prepare("Delete from users where name='"+user.username+"'");
 
     if(qry.exec()) {
         QMessageBox::information(this,tr("Delete"),tr("Data Deleted!"));
@@ -930,13 +937,10 @@ void AdminDialog1::on_pushButton_delete_clicked(){ // delete
         QMessageBox::critical(this,tr("Error"),qry.lastError().text());
     }
 
-    qDebug()<< user.username + " deleted infomation: ";
-    qDebug()<< user.username + " , " + user.password + " , " + user.insurance + " , " + user.firstName + " , " + user.lastName +
-               " , " + user.age + " , " + user.vaccine + " , " + user.shot + " , " + user.date + " , " + user.time;
 }
 
 void AdminDialog1::on_pushButton_quit_clicked(){
-    QMessageBox::StandardButton reply = QMessageBox::question(this,"My Title","Are you sure to quit the login page? ", QMessageBox::Yes| QMessageBox::No);
+    QMessageBox::StandardButton reply = QMessageBox::question(this,"Exit","Are you sure to quit the login page? ", QMessageBox::Yes| QMessageBox::No);
     if(reply == QMessageBox::Yes){
         QApplication::quit();
     }else{
@@ -1003,8 +1007,46 @@ private:
   
  </p>
  
- * * *
+
+  
+  <p>
+  <p align=left>  <h1 align="left"> F. Check.cpp:</12></p>
+  
+  For test the user is admin not to give the permission of add new users **note the password is 2001**
+  <p align=left>  <h4 align="left">
+  ![2022-02-06 03_30_23-Login](https://user-images.githubusercontent.com/93819249/152665642-61bbbf18-5b16-44e4-8a9c-bc35695eb803.png)
+
+  
+  ```cpp
+#include "checkk.h"
+#include "ui_checkk.h"
+
+checkk::checkk(QWidget *parent) :
+    QDialog(parent),
+    ui(new Ui::checkk)
+{
+    ui->setupUi(this);
+
+}
+
+checkk::~checkk()
+{
+    delete ui;
+}
+
+int checkk::Password(){
+    QString input = ui->lineEdit->text();
+    int integer_value = ui->lineEdit->text().toInt();
+    return integer_value;
+}
+  
+  ```
+  </h4></p>
+  
+ </p>
  
+ * * *
+  
  <p>
   <p align=left>  <h1 align="left"> 5. Pour la page utilisateur : (Button Register):</h1></p>
  </p>
@@ -1019,7 +1061,8 @@ de retour dans le système. Donc, la prochaine fois, cet administrateur a ses in
 
  ## Manuels d’utilisation et de logiciels
  
-![registrer](https://user-images.githubusercontent.com/93833171/151636964-d7670f3d-b287-4e0d-9bf5-41ba66008724.png)
+![aa](https://user-images.githubusercontent.com/93819249/152665776-7d264e13-c2b7-4896-9a93-1e16a591c647.png)
+
 
  <p>
   <p align=left>  <h1 align="left"> 6. Pour la page utilisateur : (Button Login) et boîte de dialogue suivante</h1></p>
@@ -1031,20 +1074,21 @@ Ensuite, après avoir cliqué sur le bouton de connexion, les informations corre
 Sinon, il affichera une erreur jusqu’à ce que vous saisissiez le nom d’utilisateur et le mot de passe corrects.
 
 #### cas 1: on entre le nom d'utilisateur n'est pas correct:
-![login](https://user-images.githubusercontent.com/93833171/151637727-a5f11d58-9f52-4467-a1c7-9aec2e766bd2.png)
+![az](https://user-images.githubusercontent.com/93819249/152665825-010235dd-cf37-430a-beec-59f71190d65e.png)
 
 #### cas 2:on assure le nom d’utilisateur et le mot de passe sont corrects en même temps.
 On Pasee directement à d'autres interface:
 
-![interface](https://user-images.githubusercontent.com/93833171/151639419-8440f1cd-d7a6-4994-9f8a-295b5ad28b49.jpg)
+![2022-02-06 03_42_50-Vaccine information page](https://user-images.githubusercontent.com/93819249/152665847-0c1cf8a5-172b-417e-add1-9cc79857818e.png)
+
 Vous pouvez commencer à construire et enregistrer votre imformation comme ceci:
 
+![AAA](https://user-images.githubusercontent.com/93819249/152665924-4c5b1e39-70f2-46bd-bb91-3e39f828c6df.png)
 
-![belcaid_inscrire](https://user-images.githubusercontent.com/93833171/151643277-17bdd714-1c28-499d-b76a-710887c4313c.jpg)
 
 Après avoir cliqué sur le Botton suivant, toutes vos informations sont enregistrées dans le système de base de données.
+![2022-02-06 03_49_26-DB Browser for SQLite - C__Users_adilr_Desktop_VaccineSchedule_Vaccine db](https://user-images.githubusercontent.com/93819249/152665949-e56363eb-6684-4ef8-ac20-1df93447de88.png)
 
-![said_belcaid](https://user-images.githubusercontent.com/93833171/151643844-d38ced56-f2d1-45f3-aaaa-e55cdc8f8256.png)
 
 
  <p>
@@ -1057,8 +1101,8 @@ nombre. Le nom d’utilisateur est Unique.
 Après avoir entré l’administrateur pour ces trois informations, il enregistrera le nom d’utilisateur, le mot de passe et 
 code de travail dans la base de données dans le système. Donc la prochaine fois, cet admin a son/elle 
 les informations enregistrées dans la base de données. Cela ressemblera à ceci:
+![adm](https://user-images.githubusercontent.com/93819249/152666034-fc981724-5d21-4626-9875-5d2ba992f402.png)
 
-![zineb1](https://user-images.githubusercontent.com/93833171/151642158-5afc5da9-1925-4a5c-b73f-6d1698dced82.png)
 
  <p>
   <p align=left>  <h1 align="left"> 8.Pour la page d'administration : (Button login)</h1></p>
@@ -1066,8 +1110,8 @@ les informations enregistrées dans la base de données. Cela ressemblera à cec
 
 Si vous avez fait les choses correctes comme vous vous êtes inscrit à la première fois. La deuxième boîte de dialogue sautera 
 comme ça.
+![admin](https://user-images.githubusercontent.com/93819249/152666106-4db66932-2948-4f4b-8f79-c3fae498fb75.png)
 
-![belcaid](https://user-images.githubusercontent.com/93833171/151642811-b5897141-4c06-48c6-8d5f-0a6d7f088217.jpg)
 
 Ensuite, après avoir cliqué sur le bouton « **Load Data** », toutes les données de la base de données seront 
 télécharger sur la vue de tableau( la zone noire et aussi chaque textEditLine.
@@ -1082,19 +1126,19 @@ n’importe qui veut changer l’imformation qu’il a enregistrée auparavant.
 
 **Delete button:** pour supprimer toute imformation que l’utilisateur a enregistrée auparavant.
 Votre écran ressemblera à ceci:
+![admins](https://user-images.githubusercontent.com/93819249/152666110-a90b76a7-d2ff-4c52-89a9-1939873697a3.png)
 
-![s_z_a](https://user-images.githubusercontent.com/93833171/151660913-c6ac0832-13c7-4002-8e8a-48e51cb1b4a4.jpg)
 
 une fois on clique sur le bouton **saved**.les information sont enregister a cote de l'administrateur:
-![saved](https://user-images.githubusercontent.com/93833171/151661410-3a339813-d9b6-47bd-835c-c9c94bd7ebe9.jpg)
+![2022-02-06 03_58_44-ASHellos_A-COVID-19-Vaccination](https://user-images.githubusercontent.com/93819249/152666136-42d7189c-f399-4650-9844-ac5258b56edf.png)
 
  <p>
   <p align=left>  <h1 align="left"> 9.Pour la page principale (bouton quitter)</h1></p>
  </p>
 Une fois que l’utilisateur a cliqué sur le bouton Quitter, la boîte Qmessage saute:Oui pour **quitter** le système, non pour **rester**.
 
+![2022-02-06 04_00_08-DB Browser for SQLite - C__Users_adilr_Desktop_VaccineSchedule_Vaccine db](https://user-images.githubusercontent.com/93819249/152666155-f9a45f81-6cfb-4df5-a8ca-cef6d812c91c.png)
 
-![quiter](https://user-images.githubusercontent.com/93833171/151661855-a377ed3c-ccb3-439d-9406-81cac0e6bf22.jpg)
 
 * * *
 ![titre](https://user-images.githubusercontent.com/93833171/151644405-8e4e79c2-22b6-4cf1-a974-0bf2bf4eb3d2.jpg)

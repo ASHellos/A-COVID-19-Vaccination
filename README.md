@@ -1018,7 +1018,7 @@ private:
   
  </p>
  
-    ![2022-02-06 04_15_17-VaccineSchedule - Qt Creator](https://user-images.githubusercontent.com/93819249/152666410-69355d26-7c08-4a6f-9a64-b7b8de98fcee.png)
+  ![2022-02-06 04_15_17-VaccineSchedule - Qt Creator](https://user-images.githubusercontent.com/93819249/152666410-69355d26-7c08-4a6f-9a64-b7b8de98fcee.png)
 
   
   <p>

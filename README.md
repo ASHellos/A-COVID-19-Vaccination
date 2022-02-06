@@ -1101,6 +1101,7 @@ nombre. Le nom d’utilisateur est Unique.
 Après avoir entré l’administrateur pour ces trois informations, il enregistrera le nom d’utilisateur, le mot de passe et 
 code de travail dans la base de données dans le système. Donc la prochaine fois, cet admin a son/elle 
 les informations enregistrées dans la base de données. Cela ressemblera à ceci:
+  
 ![adm](https://user-images.githubusercontent.com/93819249/152666034-fc981724-5d21-4626-9875-5d2ba992f402.png)
 
 
